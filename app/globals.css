@@ -81,14 +81,13 @@
 
 /* Space theme specific styles */
 .space-background {
-  background: linear-gradient(
-    135deg,
-    #1a0b3d 0%,
-    #4c1d95 25%,
-    #1e40af 50%,
-    #0891b2 75%,
-    #0d9488 100%
-  );
+  background:
+    linear-gradient(135deg, #1a0b3d 0%, #4c1d95 50%, #0891b2 100%),
+    url('/space-background-new.png');
+  background-size: cover, cover;
+  background-position: center, center;
+  background-repeat: no-repeat, no-repeat;
+  background-attachment: fixed, fixed;
   position: relative;
   overflow: hidden;
 }
