@@ -45,10 +45,10 @@ export default function SignUpPage() {
       const data = await response.json()
 
       if (data.success) {
-        // Account created successfully - redirect to login
+        // Account created successfully - redirect to root (login is on root now)
         localStorage.setItem('temp_email', email)
         alert('Account created successfully! Please login.')
-        router.push('/login')
+        router.push('/')
       } else {
         setError(data.error || 'Error creating account')
       }

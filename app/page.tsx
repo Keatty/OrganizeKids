@@ -1,17 +1,48 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
 export default function HomePage() {
   const router = useRouter()
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const handleLogin = () => {
-    if (email) {
-      localStorage.setItem('temp_email', email)
+  useEffect(() => {
+    const tempEmail = localStorage.getItem('temp_email')
+    if (tempEmail) {
+      setEmail(tempEmail)
+      localStorage.removeItem('temp_email')
     }
-    router.push('/login')
+  }, [])
+
+  const handleLogin = async (e?: React.FormEvent) => {
+    if (e && typeof (e as any).preventDefault === 'function') e.preventDefault()
+    setError('')
+    setLoading(true)
+
+    try {
+      const response = await fetch('/api/auth-db', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'login', email, password }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        localStorage.setItem('user_email', email)
+        router.push('/who-is-using')
+      } else {
+        setError(data.error || 'Erro ao fazer login')
+      }
+    } catch (err) {
+      setError('Erro ao conectar com o servidor')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleCreateAccount = () => {
@@ -31,23 +62,28 @@ export default function HomePage() {
   }
 
   return (
-    <div 
-      className='min-h-screen w-full relative overflow-hidden flex items-center justify-center'
-      style={{
-        background: 'linear-gradient(180deg, #0A0118 0%, #1B0B3D 40%, #2D1458 70%, #1B0B3D 100%)',
-      }}
-    >
-      {/* Skip Login button - top right */}
-      <button
-        onClick={handleSkipLogin}
-        className='absolute top-8 right-8 z-50 text-white font-medium px-6 py-2 rounded-lg hover:bg-white/10 transition-all'
-        style={{ fontFamily: 'Poppins' }}
-      >
-        SKIP LOGIN
-      </button>
+    <div className='min-h-screen w-full relative overflow-hidden'>
+      <div className='grid grid-cols-1 md:grid-cols-2 min-h-screen'>
+        {/* Left column: big background image */}
+        <div className='hidden md:block relative'>
+          <div className='h-full w-full bg-cover bg-center' style={{ backgroundImage: "url('/space-background-new.png')" }} />
+          {/* gradient separator on the right edge of image */}
+          <div className='absolute right-0 top-0 h-full w-28 bg-gradient-to-r from-transparent to-[#170725]'></div>
+        </div>
 
-      {/* Space background with planets and stars */}
-      <div className='absolute inset-0 overflow-hidden pointer-events-none'>
+        {/* Right column: form and decorations */}
+        <div className='relative flex items-center justify-center' style={{ background: 'linear-gradient(180deg, #0A0118 0%, #1B0B3D 40%, #2D1458 70%, #1B0B3D 100%)' }}>
+          {/* Skip Login button - top right */}
+          <button
+            onClick={handleSkipLogin}
+            className='absolute top-8 right-8 z-50 text-white font-medium px-6 py-2 rounded-lg hover:bg-white/10 transition-all'
+            style={{ fontFamily: 'Poppins' }}
+          >
+            SKIP LOGIN
+          </button>
+
+          {/* Space background with planets and stars (only visible on small screens) */}
+          <div className='absolute inset-0 overflow-hidden pointer-events-none md:hidden'>
         {/* Big cyan planet - top left with animation */}
         <div 
           className='absolute -top-32 -left-32 w-[600px] h-[600px] rounded-full animate-float-slow'
@@ -261,30 +297,28 @@ export default function HomePage() {
       `}</style>
 
       {/* Main content */}
-      <div className='relative z-10 w-full max-w-md mx-auto px-4'>
-        <div className='text-center mb-8'>
-          <h2 
-            className='text-white text-6xl font-bold mb-3'
-            style={{ fontFamily: 'Poppins', letterSpacing: '0.05em' }}
-          >
-            LOGIN
-          </h2>
-          <p className='text-white/80 text-lg' style={{ fontFamily: 'Poppins' }}>
-            Login with email address
-          </p>
-        </div>
+      <div className='relative z-10 w-full max-w-md mx-auto px-6 py-12'>
+          <div className='text-center mb-8'>
+            <h2 className='text-white text-6xl font-extrabold mb-3' style={{ fontFamily: 'Poppins', letterSpacing: '0.08em' }}>
+              LOGIN
+            </h2>
+            <p className='text-white/80 text-sm uppercase tracking-wider' style={{ fontFamily: 'Poppins' }}>
+              Sign in with email address
+            </p>
+          </div>
 
-        <div className='space-y-4'>
+        <form onSubmit={handleLogin} className='space-y-4'>
           {/* Email input */}
           <div className='relative'>
             <div className='absolute left-4 top-1/2 -translate-y-1/2 text-white/50'>
+              {/* envelope icon */}
               <svg width='20' height='20' viewBox='0 0 20 20' fill='none'>
                 <path d='M2.5 6.66667L10 11.6667L17.5 6.66667M3.33333 15H16.6667C17.5871 15 18.3333 14.2538 18.3333 13.3333V6.66667C18.3333 5.74619 17.5871 5 16.6667 5H3.33333C2.41286 5 1.66667 5.74619 1.66667 6.66667V13.3333C1.66667 14.2538 2.41286 15 3.33333 15Z' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round' strokeLinejoin='round'/>
               </svg>
             </div>
             <input
               type='email'
-              placeholder='your@email.com'
+              placeholder='Yourname@gmail.com'
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className='w-full pl-12 pr-4 py-4 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-purple-400/50 transition-all'
@@ -292,30 +326,43 @@ export default function HomePage() {
             />
           </div>
 
+          {/* Password input */}
+          <div className='relative'>
+            <input
+              type='password'
+              placeholder='Password'
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className='w-full px-4 py-4 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-purple-400/50 transition-all'
+              style={{ fontFamily: 'Poppins' }}
+            />
+          </div>
+
+          {/* Error message */}
+          {error && (
+            <div className='mb-4 p-3 rounded-xl bg-red-500/20 border border-red-500/50'>
+              <p className='text-red-200 text-sm text-center'>{error}</p>
+            </div>
+          )}
+
           {/* Login button */}
           <button
-            onClick={handleLogin}
-            className='w-full py-4 rounded-xl font-semibold text-white text-lg transition-all hover:brightness-110'
+            type='submit'
+            disabled={loading}
+            className='w-full py-4 rounded-xl font-semibold text-white text-lg transition-all hover:brightness-110 disabled:opacity-50'
             style={{
               background: 'linear-gradient(90deg, #6366F1 0%, #8B5CF6 100%)',
               fontFamily: 'Poppins',
               boxShadow: '0 4px 20px rgba(99, 102, 241, 0.4)',
             }}
           >
-            Login
+            {loading ? 'Logging in...' : 'Login'}
           </button>
 
-          {/* Create New Account button */}
-          <button
-            onClick={handleCreateAccount}
-            className='w-full py-4 rounded-xl font-semibold text-white text-lg border-2 border-white/30 hover:bg-white/5 transition-all'
-            style={{
-              fontFamily: 'Poppins',
-            }}
-          >
-            Create New Account
-          </button>
-        </div>
+          {/* Create New Account button moved below socials (transparent with white outline) */}
+        
+        </form>
 
         {/* Divider */}
         <div className='my-8 flex items-center'>
@@ -353,9 +400,22 @@ export default function HomePage() {
         </div>
 
         {/* Terms */}
+        {/* Create new account (outlined button) */}
+        <div className='mt-6 flex justify-center'>
+          <button
+            onClick={handleCreateAccount}
+            className='px-8 py-3 rounded-xl text-white font-medium border border-white/40 hover:bg-white/5 transition-all'
+            style={{ fontFamily: 'Poppins' }}
+          >
+            Create new account
+          </button>
+        </div>
+
         <p className='text-white/40 text-xs text-center mt-8' style={{ fontFamily: 'Poppins' }}>
           By registering you with our Terms and Conditions
         </p>
+          </div>
+        </div>
       </div>
     </div>
   )
